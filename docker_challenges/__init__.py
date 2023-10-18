@@ -1,5 +1,6 @@
 import traceback
 
+
 from CTFd.plugins.challenges import BaseChallenge, CHALLENGE_CLASSES, get_chal_class
 from CTFd.plugins.flags import get_flag_class
 from CTFd.utils.user import get_ip
@@ -19,6 +20,8 @@ import CTFd.utils.scores
 from CTFd.api.v1.challenges import ChallengeList, Challenge
 from flask_restx import Namespace, Resource
 from flask import request, Blueprint, jsonify, abort, render_template, url_for, redirect, session
+from CTFd.plugins.dynamic_challenges.decay import DECAY_FUNCTIONS, logarithmic
+
 # from flask_wtf import FlaskForm
 from wtforms import (
     FileField,
@@ -46,6 +49,7 @@ from CTFd.plugins import register_admin_plugin_menu_bar
 from CTFd.forms import BaseForm
 from CTFd.forms.fields import SubmitField
 from CTFd.utils.config import get_themes
+
 
 
 class DockerConfig(db.Model):
@@ -257,6 +261,7 @@ def get_client_cert(docker):
 def get_repositories(docker, tags=False, repos=False):
     r = do_request(docker, '/images/json?all=1')
     result = list()
+    print(r.json())
     for i in r.json():
         if not i['RepoTags'] == None:
             if not i['RepoTags'][0].split(':')[0] == '<none>':
@@ -353,6 +358,20 @@ def delete_container(docker, instance_id):
     do_request(docker, f'/containers/{instance_id}?force=true', headers=headers, method='DELETE')
     return True
 
+class DockerChallenge(Challenges):
+    __mapper_args__ = {'polymorphic_identity': 'docker'}
+    id = db.Column(None, db.ForeignKey('challenges.id'), primary_key=True)
+    docker_image = db.Column(db.String(128), index=True)
+    initial = db.Column(db.Integer, default=0)
+    minimum = db.Column(db.Integer, default=0)
+    decay = db.Column(db.Integer, default=0)
+    function = db.Column(db.String(32), default="logarithmic")
+    dynamic = db.Column(db.Boolean, default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(DockerChallenge, self).__init__(**kwargs)
+        self.value = kwargs["initial"]
+
 
 class DockerChallengeType(BaseChallenge):
     id = "docker"
@@ -369,6 +388,17 @@ class DockerChallengeType(BaseChallenge):
     }
     route = '/plugins/docker_challenges/assets'
     blueprint = Blueprint('docker_challenges', __name__, template_folder='templates', static_folder='assets')
+    challenge_model = DockerChallenge
+
+    @classmethod
+    def calculate_value(cls, challenge):
+        if challenge.dynamic:
+            f = DECAY_FUNCTIONS.get(challenge.function, logarithmic)
+            value = f(challenge)
+            print("DIOCANE", value , challenge.function,)
+            challenge.value = value
+            db.session.commit()
+        return challenge
 
     @staticmethod
     def update(challenge, request):
@@ -382,10 +412,12 @@ class DockerChallengeType(BaseChallenge):
 		"""
         data = request.form or request.get_json()
         for attr, value in data.items():
+            if attr in ("initial", "minimum", "decay"):
+                value = float(value)
             setattr(challenge, attr, value)
 
         db.session.commit()
-        return challenge
+        return DockerChallengeType.calculate_value(challenge)
 
     @staticmethod
     def delete(challenge):
@@ -422,6 +454,8 @@ class DockerChallengeType(BaseChallenge):
             'id': challenge.id,
             'name': challenge.name,
             'value': challenge.value,
+            "initial": challenge.initial,
+            "decay": challenge.decay,
             'docker_image': challenge.docker_image,
             'description': challenge.description,
             'category': challenge.category,
@@ -504,6 +538,7 @@ class DockerChallengeType(BaseChallenge):
             ip=get_ip(req=request),
             provided=submission,
         )
+        DockerChallengeType.calculate_value(challenge)
         db.session.add(solve)
         db.session.commit()
         # trying if this solces the detached instance error...
@@ -531,12 +566,6 @@ class DockerChallengeType(BaseChallenge):
         db.session.add(wrong)
         db.session.commit()
         #db.session.close()
-
-
-class DockerChallenge(Challenges):
-    __mapper_args__ = {'polymorphic_identity': 'docker'}
-    id = db.Column(None, db.ForeignKey('challenges.id'), primary_key=True)
-    docker_image = db.Column(db.String(128), index=True)
 
 
 # API
