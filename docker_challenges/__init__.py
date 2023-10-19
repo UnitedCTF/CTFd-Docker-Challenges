@@ -263,7 +263,7 @@ def get_repositories(docker, tags=False, repos=False):
     result = list()
     print(r.json())
     for i in r.json():
-        if not i['RepoTags'] == None:
+        if i['RepoTags']:
             if not i['RepoTags'][0].split(':')[0] == '<none>':
                 if repos:
                     if not i['RepoTags'][0].split(':')[0] in repos:
