@@ -322,11 +322,14 @@ def create_container(docker, image, team, portbl):
     team = hashlib.md5(team.encode("utf-8")).hexdigest()[:10]
     container_name = "%s_%s" % (image.split(':')[1], team)
     assigned_ports = dict()
+    
+    ports_list = list()
     for i in needed_ports:
         while True:
             assigned_port = random.choice(range(30000, 60000))
             if assigned_port not in portbl:
                 assigned_ports['%s/tcp' % assigned_port] = {}
+                ports_list.append(assigned_port)
                 break
     ports = dict()
     bindings = dict()
@@ -335,7 +338,10 @@ def create_container(docker, image, team, portbl):
         ports[i] = {}
         bindings[i] = [{"HostPort": tmp_ports.pop()}]
     headers = {'Content-Type': "application/json"}
-    data = json.dumps({"Image": image, "ExposedPorts": ports, "HostConfig": {"PortBindings": bindings}})
+    env = [
+        "PORTS=" + ",".join(ports_list),
+    ]
+    data = json.dumps({"Image": image, "ExposedPorts": ports, "HostConfig": {"PortBindings": bindings}, "Env": env})
     if tls:
         r = requests.post(url="%s/containers/create?name=%s" % (URL_TEMPLATE, container_name), cert=CERT,
                       verify=False, data=data, headers=headers)
