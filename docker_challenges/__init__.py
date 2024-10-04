@@ -338,8 +338,9 @@ def create_container(docker, image, team, portbl):
         ports[i] = {}
         bindings[i] = [{"HostPort": tmp_ports.pop()}]
     headers = {'Content-Type': "application/json"}
+    ports_list_strings = map(str, ports_list)
     env = [
-        "PORTS=" + ",".join(ports_list),
+        "PORTS=" + ",".join(ports_list_strings),
     ]
     data = json.dumps({"Image": image, "ExposedPorts": ports, "HostConfig": {"PortBindings": bindings}, "Env": env})
     if tls:
@@ -401,7 +402,6 @@ class DockerChallengeType(BaseChallenge):
         if challenge.dynamic:
             f = DECAY_FUNCTIONS.get(challenge.function, logarithmic)
             value = f(challenge)
-            print("DIOCANE", value , challenge.function,)
             challenge.value = value
             db.session.commit()
         return challenge
