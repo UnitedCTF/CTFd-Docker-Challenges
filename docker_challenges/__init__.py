@@ -20,7 +20,7 @@ import CTFd.utils.scores
 from CTFd.api.v1.challenges import ChallengeList, Challenge
 from flask_restx import Namespace, Resource
 from flask import request, Blueprint, jsonify, abort, render_template, url_for, redirect, session
-from CTFd.plugins.dynamic_challenges.decay import DECAY_FUNCTIONS, logarithmic
+from CTFd.plugins.docker_challenges.decay import DECAY_FUNCTIONS, logarithmic
 
 # from flask_wtf import FlaskForm
 from wtforms import (
@@ -544,9 +544,9 @@ class DockerChallengeType(BaseChallenge):
             ip=get_ip(req=request),
             provided=submission,
         )
-        DockerChallengeType.calculate_value(challenge)
         db.session.add(solve)
         db.session.commit()
+        DockerChallengeType.calculate_value(challenge)
         # trying if this solces the detached instance error...
         #db.session.close()
 
