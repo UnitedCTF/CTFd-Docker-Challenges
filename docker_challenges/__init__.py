@@ -328,7 +328,8 @@ def create_container(docker, image, team, portbl):
         while True:
             assigned_port = random.choice(range(30000, 60000))
             if assigned_port not in portbl:
-                assigned_ports['%s/tcp' % assigned_port] = {}
+                port_protocol = i.split('/')[1]
+                assigned_ports['%s/%s' % (assigned_port, port_protocol)] = {}
                 ports_list.append(assigned_port)
                 break
     ports = dict()
