@@ -52,13 +52,14 @@ function get_docker_status(container) {
     CTFd.fetch("/api/v1/docker_status")
         .then((data) => {
             data.json().then((result) => {
+                var hostname = data.url.split('//')[1].split('/')[0];
                 CTFd.lib.$.each(result['data'], function(i, item) {
                     if (item.docker_image === container) {
                         var ports = String(item.ports).split(',');
                         var data = '';
                         CTFd.lib.$.each(ports, function(x, port) {
-                            port = String(port)
-                            data = data + 'Host: ' + item.host + ' Port: ' + port + '<br />';
+                            port = String(port).split('/')[0];
+                            data = data + `Host: https://${hostname}:${port}<br />`;
                         })
                         CTFd.lib.$('#docker_container').html('<pre>Docker Container Information:<br />' + data + '<div class="mt-2" id="' + String(item.instance_id).substring(0,10) + '_revert_container"></div>');
                         var countDownDate = new Date(parseInt(item.revert_time) * 1000).getTime();
