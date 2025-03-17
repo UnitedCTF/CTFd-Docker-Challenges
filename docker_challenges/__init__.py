@@ -54,7 +54,7 @@ from CTFd.utils.config import get_themes
 
 class DockerConfig(db.Model):
     """
-	Docker Config Model. This model stores the config for docker API connections.
+	Docker Config Model. This model stores the config for docker API connections.   
 	"""
     id = db.Column(db.Integer, primary_key=True)
     hostname = db.Column("hostname", db.String(64), index=True)
@@ -241,13 +241,17 @@ def get_client_cert(docker):
         ca = docker.ca_cert
         client = docker.client_cert
         ckey = docker.client_key
-        ca_file = tempfile.NamedTemporaryFile(delete=False)
+        default_mode = 'w+'
+        if isinstance(client, bytes):
+            default_mode = 'w+b'
+        ca_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
         ca_file.write(ca)
         ca_file.seek(0)
-        client_file = tempfile.NamedTemporaryFile(delete=False)
+        client_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
+        print()
         client_file.write(client)
         client_file.seek(0)
-        key_file = tempfile.NamedTemporaryFile(delete=False)
+        key_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
         key_file.write(ckey)
         key_file.seek(0)
         CERT = (client_file.name, key_file.name)
@@ -303,13 +307,16 @@ def create_container(docker, image, team, portbl):
             ca = docker.ca_cert
             client = docker.client_cert
             ckey = docker.client_key
-            ca_file = tempfile.NamedTemporaryFile(delete=False)
+            default_mode = 'w+'
+            if isinstance(client, bytes):
+                default_mode = 'w+b'
+            ca_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
             ca_file.write(ca)
             ca_file.seek(0)
-            client_file = tempfile.NamedTemporaryFile(delete=False)
+            client_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
             client_file.write(client)
             client_file.seek(0)
-            key_file = tempfile.NamedTemporaryFile(delete=False)
+            key_file = tempfile.NamedTemporaryFile(mode=default_mode, delete=False)
             key_file.write(ckey)
             key_file.seek(0)
             CERT = (client_file.name, key_file.name)
