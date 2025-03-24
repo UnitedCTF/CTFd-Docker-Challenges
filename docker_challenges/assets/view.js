@@ -59,9 +59,9 @@ function get_docker_status(container) {
                         var data = '';
                         CTFd.lib.$.each(ports, function(x, port) {
                             port = String(port).split('/')[0];
-                            data = data + `Host: https://${hostname}:${port}<br />`;
+                            data = data + `<a href='http://${hostname}:${port}' target='_blank'>http://${hostname}:${port}</a><br />`;
                         })
-                        CTFd.lib.$('#docker_container').html('<pre>Docker Container Information:<br />' + data + '<div class="mt-2" id="' + String(item.instance_id).substring(0,10) + '_revert_container"></div>');
+                        CTFd.lib.$('#docker_container').html('<pre>Instance available at:<br />' + data + '<div class="mt-2" id="' + String(item.instance_id).substring(0,10) + '_revert_container"></div>');
                         var countDownDate = new Date(parseInt(item.revert_time) * 1000).getTime();
                         var x = setInterval(function() {
                             var now = new Date().getTime();

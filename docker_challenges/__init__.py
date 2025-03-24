@@ -350,7 +350,7 @@ def create_container(docker, image, team, portbl):
     env = [
         "PORTS=" + ",".join(ports_list_strings),
     ]
-    data = json.dumps({"Image": image, "ExposedPorts": ports, "HostConfig": {"PortBindings": bindings}, "Env": env})
+    data = json.dumps({"Image": image, "ExposedPorts": ports, "HostConfig": {"PortBindings": bindings, "CpuShares": 512, "Memory": 2000000000}, "Env": env})
     if tls:
         r = requests.post(url="%s/containers/create?name=%s" % (URL_TEMPLATE, container_name), cert=CERT,
                       verify=False, data=data, headers=headers)
