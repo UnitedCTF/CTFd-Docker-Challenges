@@ -327,7 +327,7 @@ def create_container(docker, image, team, portbl):
     URL_TEMPLATE = '%s://%s' % (prefix, host)
     needed_ports = get_required_ports(docker, image)
     team = hashlib.md5(team.encode("utf-8")).hexdigest()[:10]
-    container_name = "%s_%s" % (image.split(':')[1], team)
+    container_name = "%s_%s" % (image.split(':')[0], team)
     assigned_ports = dict()
     
     ports_list = list()
