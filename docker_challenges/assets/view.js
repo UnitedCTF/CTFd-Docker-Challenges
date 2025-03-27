@@ -74,10 +74,10 @@ function get_docker_status(container) {
                             CTFd.lib.$("#" + String(item.instance_id).substring(0,10) + "_revert_container").html('Next Revert Available in ' + minutes + ':' + seconds);
                             if (distance < 0) {
                                 clearInterval(x);
-                                CTFd.lib.$("#" + String(item.instance_id).substring(0,10) + "_revert_container").html('<a onclick="start_container(\'' + item.docker_image + '\');" class=\'btn btn-dark\'><small style=\'color:white;\'><i class="fas fa-redo"></i> Revert</small></a>');
+                                CTFd.lib.$("#" + String(item.instance_id).substring(0,10) + "_revert_container").html('<a onclick="start_container(\'' + item.docker_image + '\',true);" class=\'btn btn-dark\'><small style=\'color:white;\'><i class="fas fa-redo"></i> Revert</small></a>');
                             }
                         }, 1000);
-                        return false;
+                        return true;
                     };
                 });
             }).catch(() => {
@@ -89,16 +89,19 @@ function get_docker_status(container) {
         });
 };
 
-function start_container(container) {
-    CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
-    CTFd.fetch("/api/v1/container?name=" + container )
-        .then((data) => {
-            console.log(data);
-            get_docker_status(container);
-        }).catch(() => {
-            ezal("Attention!", "You can only revert a container once per 5 minutes! Please be patient.");
-            get_docker_status(container);
-        });
+function start_container(container, revert=false) {
+    if (revert === true || get_docker_status(container) !== true) {
+        CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+        CTFd.fetch("/api/v1/container?name=" + container )
+            .then((data) => {
+                console.log(data);
+                get_docker_status(container);
+            }).catch(() => {
+                ezal("Attention!", "You can only revert a container once per 5 minutes! Please be patient.");
+                get_docker_status(container);
+            });
+    }
+    
 }
 
 function ezal(title, body) {

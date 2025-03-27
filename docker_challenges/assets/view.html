@@ -1,11 +1,5 @@
 {% extends "challenge.html" %}
 {% block description %}
-<script>
-    var DOCKER_CONTAINER = '{{ challenge.docker_image | safe }}';
-    (function() {
-        get_docker_status(DOCKER_CONTAINER);
-    })();
-</script>
 {{ challenge.html }}
 <div class='mb-3 text-center' id='docker_container'>
     <span>
