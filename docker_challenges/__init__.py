@@ -192,12 +192,19 @@ kill_container = Namespace("nuke", description='Endpoint to nuke containers')
 
 @kill_container.route("", methods=['POST', 'GET'])
 class KillContainerAPI(Resource):
-    @admins_only
+    @authed_only
     def get(self):
+        if is_admin():
+            docker_tracker = DockerChallengeTracker.query.all()
+        elif is_teams_mode():
+            session = get_current_team()
+            docker_tracker = DockerChallengeTracker.query.filter_by(team_id=session.id)
+        else:
+            session = get_current_user()
+            docker_tracker = DockerChallengeTracker.query.filter_by(user_id=session.id)
         container = request.args.get('container')
         full = request.args.get('all')
         docker_config = DockerConfig.query.filter_by(id=1).first()
-        docker_tracker = DockerChallengeTracker.query.all()
         if full == "true":
             for c in docker_tracker:
                 delete_container(docker_config, c.instance_id)
