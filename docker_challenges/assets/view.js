@@ -65,7 +65,11 @@ function get_docker_status(container) {
                             port = String(port).split('/')[0];
                             data = data + `<a href='http://${hostname}:${port}' target='_blank'>http://${hostname}:${port}</a><br />`;
                         });
-                        CTFd.lib.$('#docker_container').html('<pre>Instance available at:<br />' + data + '<div class="mt-2" id="' + String(item.instance_id).substring(0,10) + '_revert_container"></div>');
+                        CTFd.lib.$('#docker_container').html(
+                            '<pre>Instance available at:<br />' + data + 
+                            '<div class="mt-2" id="' + String(item.instance_id).substring(0,10) + '_revert_container"></div>' +
+                            `<div class="mt-2" id="${String(item.instance_id).substring(0,10)}_delete_container"><a id="delete_${String(item.instance_id).substring(0,10)}" style="cursor: pointer;" class="fas fa-trash" onclick="check_nuke_container('${item.instance_id}', '${item.docker_image}')"></a></div>`
+                        );
                         const countDownDate = new Date(parseInt(item.revert_time) * 1000).getTime();
                         const x = setInterval(function() {
                             const now = new Date().getTime();
@@ -120,4 +124,20 @@ function ezal(title, body) {
         '</div>';
 
     CTFd.lib.$("#docker_container").html(content);
+}
+
+function check_nuke_container(instance, container) {
+    if (confirm("Are you sure you want to nuke this container?")) {
+        nuke_container(instance, container);
+    }
+}
+
+function nuke_container(instance, container) {
+    CTFd.fetch("/api/v1/nuke?container=" + instance)
+        .then(() => {
+            CTFd.lib.$('#docker_container').html(`<span><a onclick="start_container('${container}');" class='btn btn-dark'><small style='color:white;'><i class="fas fa-play"></i> Start Docker Instance</small></a></span>`);
+            get_docker_status();
+        }).catch(() => {
+            ezal("Attention!", "Error nuking container.");
+        });
 }
