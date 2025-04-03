@@ -1,10 +1,11 @@
 {% extends "admin/challenges/update.html" %}
 {% block value %}
 <div class="form-group">
-    <label for="DockerImage" id='dockerimage_label'>Docker Image:
-        <i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right" title="The docker image for your challenge"></i>
-    </label>
-    <select id="dockerimage_select" name="docker_image" class="form-control" required></select>
+	<label for="DockerImage" id='dockerimage_label'>Docker Image:
+		<i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right"
+			title="The docker image for your challenge"></i>
+	</label>
+	<select id="dockerimage_select" name="docker_image" class="form-control" required></select>
 </div>
 <div class="form-group">
 	<label for="value">Current Value<br>
@@ -12,11 +13,11 @@
 			This is how many points the challenge is worth right now.
 		</small>
 	</label>
-    {% if challenge.dynamic %}
-	    <input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}" disabled>
-    {% else %}
-        <input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}">
-    {% endif %}
+	{% if challenge.dynamic %}
+	<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}" disabled>
+	{% else %}
+	<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}">
+	{% endif %}
 </div>
 <div class="form-group">
 	<label for="value">Is dynamic<br>
@@ -42,13 +43,14 @@
 			<span>How the dynamic value will be calculated based on the Decay value</span>
 			<ul>
 				<li>Linear: Calculated as <code>Initial - (Decay * SolveCount)</code></li>
-				<li>Logarithmic: Calculated as <code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
+				<li>Logarithmic: Calculated as
+					<code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
 			</ul>
 		</small>
 	</label>
 	<select name="function" class="custom-select">
-		<option value="linear" {% if challenge.function == "linear" %}selected{% endif %}>Linear</option>
-		<option value="logarithmic" {% if challenge.function == "logarithmic" %}selected{% endif %}>Logarithmic</option>
+		<option value="linear" {% if challenge.function=="linear" %}selected{% endif %}>Linear</option>
+		<option value="logarithmic" {% if challenge.function=="logarithmic" %}selected{% endif %}>Logarithmic</option>
 	</select>
 </div>
 
@@ -58,7 +60,8 @@
 			<span>The decay value is used differently depending on the above Decay Function</span>
 			<ul>
 				<li>Linear: The amount of points deducted per solve. Equal deduction per solve.</li>
-				<li>Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves will lose less points. Later solves will lose more points</li>
+				<li>Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves
+					will lose less points. Later solves will lose more points</li>
 			</ul>
 		</small>
 	</label>
@@ -77,6 +80,6 @@
 {% endblock %}
 {% block footer %}
 <script>
-var DOCKER_IMAGE = '{{ challenge.docker_image }}';
+	var DOCKER_IMAGE = '{{ challenge.docker_image }}';
 </script>
 {% endblock %}
