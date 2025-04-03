@@ -70,8 +70,8 @@ class DockerChallengeTracker(db.Model):
 	Docker Container Tracker. This model stores the users/teams active docker containers.
 	"""
     id = db.Column(db.Integer, primary_key=True)
-    team_id = db.Column("team_id", db.String(64), index=True)
-    user_id = db.Column("user_id", db.String(64), index=True)
+    team_id = db.Column("team_id", db.Integer, index=True)
+    user_id = db.Column("user_id", db.Integer, index=True)
     docker_image = db.Column("docker_image", db.String(64), index=True)
     timestamp = db.Column("timestamp", db.Integer, index=True)
     revert_time = db.Column("revert_time", db.Integer, index=True)
@@ -173,15 +173,17 @@ def define_docker_status(app):
     @admin_docker_status.route("/admin/docker_status", methods=["GET", "POST"])
     @admins_only
     def docker_admin():
-        docker_config = DockerConfig.query.filter_by(id=1).first()
-        docker_tracker = DockerChallengeTracker.query.all()
-        for i in docker_tracker:
-            if is_teams_mode():
-                name = Teams.query.filter_by(id=i.team_id).first()
-                i.team_id = name.name
-            else:
-                name = Users.query.filter_by(id=i.user_id).first()
-                i.user_id = name.name
+        # docker_config = DockerConfig.query.filter_by(id=1).first()
+        with db.session.no_autoflush: # We do this to prevent the session from being flushed when we modify the docker tracker
+            docker_tracker = DockerChallengeTracker.query.all()
+            print(type(docker_tracker[0]))
+            for i in docker_tracker:
+                if is_teams_mode():
+                    name = Teams.query.filter_by(id=i.team_id).first()
+                    i.team_id = name.name
+                else:
+                    name = Users.query.filter_by(id=i.user_id).first()
+                    i.user_id = name.name
         return render_template("admin_docker_status.html", dockers=docker_tracker)
 
     app.register_blueprint(admin_docker_status)
