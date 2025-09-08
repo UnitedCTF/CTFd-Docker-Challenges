@@ -19,7 +19,13 @@ String.prototype.format = function () {
     });
 };
 
-CTFd._internal.challenge.postRender = function () { }
+CTFd._internal.challenge.postRender = function () {
+    const challenge = CTFd._internal.challenge;
+
+    console.log(challenge);
+
+    // get_docker_status(challenge.data.docker_image);
+}
 
 
 CTFd._internal.challenge.submit = function (preview) {
@@ -100,20 +106,36 @@ function get_docker_status(container) {
         });
 }
 
-function start_container(container, revert = false) {
-    get_docker_status(container)
-        .then((docker_status) => {
-            if (revert === true || docker_status !== true) {
-                CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
-                CTFd.fetch("/api/v1/container?name=" + container)
-                    .then(() => {
-                        get_docker_status(container);
-                    }).catch(() => {
-                        ezal("Attention!", "You can only revert a container once per 5 minutes! Please be patient.");
-                        get_docker_status(container);
-                    });
-            }
-        });
+async function start_container() {
+    console.log("Starting container: " + CTFd._internal.challenge.data.docker_image);
+    let res = await CTFd.fetch("/api/v1/container", {
+        method: "POST",
+        body: JSON.stringify({
+            challenge_id: CTFd._internal.challenge.data.id,
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    }).then(a => a.json());
+
+
+    console.log("Container started");
+    CTFd.lib.$('#docker_container').html(
+        '<pre>Instance available at:<br />' + res.data.connection_info + '</pre>'
+    );
+    // get_docker_status(container)
+    //     .then((docker_status) => {
+    //         if (revert === true || docker_status !== true) {
+    //             CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+    //             CTFd.fetch("/api/v1/container?name=" + container)
+    //                 .then(() => {
+    //                     get_docker_status(container);
+    //                 }).catch(() => {
+    //                     ezal("Attention!", "You can only revert a container once per 5 minutes! Please be patient.");
+    //                     get_docker_status(container);
+    //                 });
+    //         }
+    //     });
 }
 
 function ezal(title, body) {

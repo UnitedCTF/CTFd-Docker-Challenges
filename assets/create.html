@@ -1,69 +1,38 @@
 {% extends "admin/challenges/create.html" %}
 {% block value %}
+<!-- Original implementation for the value attribute of the challenge -->
 <div class="form-group">
-	<label for="DockerImage" id='dockerimage_label'>Docker Image:
-		<i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right"
-			title="The docker image for your challenge"></i>
-	</label>
-	<select id="dockerimage_select" name="docker_image" class="form-control" required></select>
-</div>
-<div class="form-group">
-	<label for="dynamic">Is dynamic<br>
+	<label>
+		Value:<br>
 		<small class="form-text text-muted">
-			Enable dynamic
+			This is how many points are rewarded for solving this challenge.
 		</small>
 	</label>
-	<input type="checkbox" id="dynamic" class="form-check-input" name="dynamic">
+	<input type="number" class="form-control" name="value" placeholder="Enter value" required>
 </div>
 
 <div class="form-group">
-	<label for="value">Initial Value<br>
+	<label>
+		Playbook Name:<br>
 		<small class="form-text text-muted">
-			This is how many points the challenge is worth initially.
+			Specify the name of the playbook to use for this challenge.
 		</small>
 	</label>
-	<input type="number" class="form-control" name="initial" placeholder="Enter value" required>
+	<input type="text" class="form-control" name="playbook_name" placeholder="Enter playbook name" required>
 </div>
 
 <div class="form-group">
-	<label for="value">Decay Function<br>
+	<label>
+		Deploy Parameters:<br>
 		<small class="form-text text-muted">
-			<span>How the dynamic value will be calculated based on the Decay value</span>
-			<ul>
-				<li>Linear: Calculated as <code>Initial - (Decay * SolveCount)</code></li>
-				<li>Logarithmic: Calculated as
-					<code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
-			</ul>
+			Optional parameters to pass during deployment (JSON format).
 		</small>
 	</label>
-	<select name="function" class="custom-select">
-		<option value="linear">Linear</option>
-		<option value="logarithmic">Logarithmic</option>
-	</select>
+	<input type="text" class="form-control" name="deploy_parameters" placeholder='{"image_name": "myimage"}'>
 </div>
-<div class="form-group">
-	<label for="value">Decay<br>
-		<small class="form-text text-muted">
-			<span>The decay value is used differently depending on the above Decay Function</span>
-			<ul>
-				<li>Linear: The amount of points deducted per solve. Equal deduction per solve.</li>
-				<li>Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves
-					will lose less
-					points. Later solves will lose more points</li>
-			</ul>
-		</small>
-	</label>
-	<input type="number" class="form-control" name="decay" min="1" placeholder="Enter Decay value">
-</div>
-<div class="form-group">
-	<label for="value">Minimum Value<br>
-		<small class="form-text text-muted">
-			This is the lowest that the challenge can be worth
-		</small>
-	</label>
-	<input type="number" class="form-control" name="minimum" placeholder="Enter minimum value">
-</div>
+
 {% endblock %}
+
 {% block type %}
-<input type="hidden" name="type" value="docker" id="chaltype">
+<input type="hidden" name="type" value="docker">
 {% endblock %}
