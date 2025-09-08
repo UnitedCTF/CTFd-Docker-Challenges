@@ -1,6 +1,3 @@
-import json
-from typing import Any
-
 from flask import Blueprint
 
 from CTFd.models import (
@@ -10,8 +7,8 @@ from CTFd.models import (
 from CTFd.plugins.challenges import BaseChallenge
 
 
-class DockerChallenge(Challenges):
-    __mapper_args__ = {"polymorphic_identity": "docker"}
+class AnsibleChallenge(Challenges):
+    __mapper_args__ = {"polymorphic_identity": "ansible"}
     id = db.Column(None, db.ForeignKey("challenges.id"), primary_key=True)
     playbook_name = db.Column(db.String(255), index=True)
     deploy_parameters = db.Column(db.Text, default="{}")
@@ -19,30 +16,30 @@ class DockerChallenge(Challenges):
     def __init__(self, playbook_name: str, deploy_parameters: str, *args, **kwargs):
         self.playbook_name = playbook_name
         self.deploy_parameters = deploy_parameters
-        kwargs["type"] = "docker"
+        kwargs["type"] = "ansible"
         super().__init__(*args, **kwargs)
 
-class DockerChallengeType(BaseChallenge):
-    id = "docker"
-    name = "docker"
+class AnsibleChallengeType(BaseChallenge):
+    id = "ansible"
+    name = "ansible"
     templates = {
-        "create": "/plugins/docker_challenges/assets/create.html",
-        "update": "/plugins/docker_challenges/assets/update.html",
-        "view": "/plugins/docker_challenges/assets/view.html",
+        "create": "/plugins/ansible_challenges/assets/create.html",
+        "update": "/plugins/ansible_challenges/assets/update.html",
+        "view": "/plugins/ansible_challenges/assets/view.html",
     }
     scripts = {
-        "create": "/plugins/docker_challenges/assets/create.js",
-        "update": "/plugins/docker_challenges/assets/update.js",
-        "view": "/plugins/docker_challenges/assets/view.js",
+        "create": "/plugins/ansible_challenges/assets/create.js",
+        "update": "/plugins/ansible_challenges/assets/update.js",
+        "view": "/plugins/ansible_challenges/assets/view.js",
     }
-    route = "/plugins/docker_challenges/assets"
+    route = "/plugins/ansible_challenges/assets"
     blueprint = Blueprint(
-        "docker_challenges",
+        "ansible_challenges",
         __name__,
         template_folder="templates",
         static_folder="assets",
     )
-    challenge_model = DockerChallenge
+    challenge_model = AnsibleChallenge
 
     @classmethod
     def delete(cls, challenge):
@@ -63,7 +60,7 @@ class DockerChallengeType(BaseChallenge):
         :param challenge:
         :return: Challenge object, data dictionary to be returned to the user
         """
-        challenge = DockerChallenge.query.filter_by(id=challenge.id).first()
+        challenge = AnsibleChallenge.query.filter_by(id=challenge.id).first()
         data = super().read(challenge)
         data.update(
             {

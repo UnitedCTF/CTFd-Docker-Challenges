@@ -12,7 +12,7 @@ from CTFd.utils.decorators import (
 )
 
 
-class DockerConfig(db.Model):
+class AnsibleConfig(db.Model):
     """
     Docker Config Model. This model stores the config for docker API connections.
     """
@@ -34,7 +34,7 @@ class DockerConfigForm(BaseForm):
     submit = SubmitField("Submit")
 
 
-def define_docker_admin(app):
+def define_ansible_admin(app):
     admin_docker_config = Blueprint(
         "admin_docker_config",
         __name__,
@@ -45,9 +45,9 @@ def define_docker_admin(app):
     @admin_docker_config.route("/admin/docker_config", methods=["GET", "POST"])
     @admins_only
     def docker_config():
-        config = DockerConfig.query.filter_by(id=1).first()
+        config = AnsibleConfig.query.filter_by(id=1).first()
         if not config:
-            config = DockerConfig()
+            config = AnsibleConfig()
 
         form = DockerConfigForm(request.form, config)
 

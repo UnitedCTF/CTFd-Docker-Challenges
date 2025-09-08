@@ -2,7 +2,7 @@
 {% block content %}
 <div class="jumbotron">
     <div class="container">
-        <h1>Docker Status</h1>
+        <h1>Ansible Status</h1>
     </div>
 </div>
 <div class="container">
@@ -23,26 +23,27 @@
                         <th width="10px" class="text-center" style="cursor: pointer;" onclick="sortTable(0)">ID</th>
                         <th class="text-left" style="cursor: pointer;" onclick="sortTable(1)">{% if dockers[0].team_id
                             %}Team{% else %}User{% endif %}</th>
-                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(2)">Docker Image</th>
-                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(3)">Instance ID</th>
-                        <th class="text-left">Revoke</th>
+                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(2)">Challenge ID</th>
+                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(3)">Deployment ID</th>
+                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(4)">Connection info</th>
+                        <th class="text-left">Destroy</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for docker in dockers %}
-                    <tr id='tr_{{docker.instance_id}}' name='{{docker.id}}'>
-                        <td class='text-center' value='{{docker.id}}'>{{docker.id}}</td>
-                        {% if docker.team_id %}
-                        <td class='text-center' value='{{docker.team_id | safe }}'>{{docker.team_id | safe }}</td>
+                    {% for instance in instances %}
+                    <tr id='tr_{{instance.id}}' name='{{instance.id}}'>
+                        <td class='text-center' value='{{instance.id}}'>{{instance.id}}</td>
+                        {% if instance.team_id %}
+                        <td class='text-center'>{{instance.team_id | safe }}</td>
                         {% else %}
-                        <td class='text-center' value='{{docker.team_id | safe }}'>{{docker.user_id | safe }}</td>
+                        <td class='text-center'>{{instance.user_id | safe }}</td>
                         {% endif %}
-                        <td class='text-center' value='{{docker.docker_image}}'>{{docker.docker_image}}</td>
-                        <td class='text-center' value='{{docker.instance_id | truncate(15)}}'>{{docker.instance_id |
-                            truncate(15)}}</td>
-                        <td class='text-center'><a id="delete_{{docker.instance_id}}" style="cursor: pointer;"
+                        <td class='text-center'>{{instance.challenge_id}}</td>
+                        <td class='text-center'>{{instance.deployment_id}}</td>
+                        <td class='text-center'>{{instance.connection_info | truncate(15)}}</td>
+                        <td class='text-center'><a id="delete_{{instance.instance_id}}" style="cursor: pointer;"
                                 class="fas fa-trash"
-                                onclick="check_nuke_container('{{docker.instance_id}}', false)"></a></td>
+                                onclick="check_nuke_container('{{instance.id}}', false)"></a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
