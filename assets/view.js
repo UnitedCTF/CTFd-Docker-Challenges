@@ -1,9 +1,6 @@
 CTFd._internal.challenge.data = undefined
 
-CTFd._internal.challenge.data = undefined;
-
 CTFd._internal.challenge.renderer = null;
-
 
 CTFd._internal.challenge.preRender = function () { }
 
@@ -20,10 +17,6 @@ String.prototype.format = function () {
 };
 
 CTFd._internal.challenge.postRender = function () {
-    const challenge = CTFd._internal.challenge;
-
-    console.log(challenge);
-
     // get_docker_status(challenge.data.docker_image);
 }
 
@@ -74,7 +67,7 @@ function get_docker_status(container) {
                         CTFd.lib.$('#docker_container').html(
                             '<pre>Instance available at:<br />' + data +
                             '<div class="mt-2" id="' + String(item.instance_id).substring(0, 10) + '_revert_container"></div>' +
-                            `<div class="mt-2" id="${String(item.instance_id).substring(0, 10)}_delete_container"><a id="delete_${String(item.instance_id).substring(0, 10)}" style="cursor: pointer;" class="fas fa-trash" onclick="check_nuke_container('${item.instance_id}', '${item.docker_image}')"></a></div>`
+                            `<div class="mt-2" id="${String(item.instance_id).substring(0, 10)}_delete_container"><a id="delete_${String(item.instance_id).substring(0, 10)}" style="cursor: pointer;" class="fas fa-trash" onclick="check_nuke_container('${item.instance_id}')"></a></div>`
                         );
                         const countDownDate = new Date(parseInt(item.revert_time) * 1000).getTime();
                         const x = setInterval(function () {
@@ -106,36 +99,40 @@ function get_docker_status(container) {
         });
 }
 
-async function start_container() {
-    console.log("Starting container: " + CTFd._internal.challenge.data.docker_image);
-    let res = await CTFd.fetch("/api/v1/container", {
-        method: "POST",
-        body: JSON.stringify({
-            challenge_id: CTFd._internal.challenge.data.id,
-        }),
-        headers: {
-            "Content-Type": "application/json"
-        }
-    }).then(a => a.json());
+async function deploy() {
+    let res;
+    try {
+        res = await CTFd.fetch("/api/v1/deploy", {
+            method: "POST",
+            body: JSON.stringify({
+                challenge_id: CTFd._internal.challenge.data.id,
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+    } catch (err) {
+        console.log(err)
+        ezal("Attention!", "Network error while starting container.");
+        return;
+    }
 
+    if (!res.ok) {
+        const error = await res.json();
+        ezal("Attention!", error.message || "Error starting container.");
+        return;
+    }
+
+    const data = await res.json();
+
+    // If connection_info is a URL, make it a clickable link
+    const connection_info = (data.connection_info.indexOf('http') === 0) ? `<a href="${data.connection_info}" target="_blank">${data.connection_info}</a>` : `<code>${data.connection_info}</code>`;
 
     console.log("Container started");
     CTFd.lib.$('#docker_container').html(
-        '<pre>Instance available at:<br />' + res.data.connection_info + '</pre>'
+        '<div>Instance available at:<br />' + connection_info + '</div>' +
+        `<div class="mt-2"><a onclick="check_nuke_container(${data.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Delete Instance</small></a></div>`
     );
-    // get_docker_status(container)
-    //     .then((docker_status) => {
-    //         if (revert === true || docker_status !== true) {
-    //             CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
-    //             CTFd.fetch("/api/v1/container?name=" + container)
-    //                 .then(() => {
-    //                     get_docker_status(container);
-    //                 }).catch(() => {
-    //                     ezal("Attention!", "You can only revert a container once per 5 minutes! Please be patient.");
-    //                     get_docker_status(container);
-    //                 });
-    //         }
-    //     });
 }
 
 function ezal(title, body) {
@@ -148,16 +145,24 @@ function ezal(title, body) {
     CTFd.lib.$("#docker_container").html(content);
 }
 
-function check_nuke_container(instance, container) {
+function check_nuke_container(instance_id) {
     if (confirm("Are you sure you want to nuke this container?")) {
-        nuke_container(instance, container);
+        nuke_container(instance_id);
     }
 }
 
-function nuke_container(instance, container) {
-    CTFd.fetch("/api/v1/nuke?container=" + instance)
+function nuke_container(instance_id) {
+    CTFd.fetch("/api/v1/deploy", {
+        method: "DELETE",
+        body: JSON.stringify({
+            instance_id: instance_id,
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
         .then(() => {
-            CTFd.lib.$('#docker_container').html(`<span><a onclick="start_container('${container}');" class='btn btn-dark'><small style='color:white;'><i class="fas fa-play"></i> Start Docker Instance</small></a></span>`);
+            CTFd.lib.$('#docker_container').html(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small></a></span>`);
             get_docker_status();
         }).catch(() => {
             ezal("Attention!", "Error nuking container.");

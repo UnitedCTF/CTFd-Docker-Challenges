@@ -1,5 +1,6 @@
 from CTFd.models import db
 
+
 class DeploymentInstance(db.Model):
     """
     Ansible Container Tracker. This model stores the users/teams active ansible containers.

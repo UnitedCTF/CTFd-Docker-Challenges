@@ -2,10 +2,8 @@
 {% block description %}
 {{ challenge.html }}
 <div class='mb-3 text-center' id='docker_container'>
-    <span>
-        <a onclick="start_container()" class='btn btn-dark'>
-            <small style='color:white;'><i class="fas fa-play"></i> Start Docker Instance</small>
-        </a>
-    </span>
+    <a onclick="deploy()" class='btn btn-dark border border-white'>
+        <small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small>
+    </a>
 </div>
 {% endblock %}

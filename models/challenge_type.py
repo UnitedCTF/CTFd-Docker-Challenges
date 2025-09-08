@@ -1,15 +1,14 @@
 from flask import Blueprint
 
-from CTFd.models import (
-    Challenges,
-    db,
-)
+from CTFd.models import Challenges, db
 from CTFd.plugins.challenges import BaseChallenge
 
 
 class AnsibleChallenge(Challenges):
     __mapper_args__ = {"polymorphic_identity": "ansible"}
-    id = db.Column(None, db.ForeignKey("challenges.id"), primary_key=True)
+    id = db.Column(
+        db.Integer, db.ForeignKey("challenges.id", ondelete="CASCADE"), primary_key=True
+    )
     playbook_name = db.Column(db.String(255), index=True)
     deploy_parameters = db.Column(db.Text, default="{}")
 
@@ -18,6 +17,7 @@ class AnsibleChallenge(Challenges):
         self.deploy_parameters = deploy_parameters
         kwargs["type"] = "ansible"
         super().__init__(*args, **kwargs)
+
 
 class AnsibleChallengeType(BaseChallenge):
     id = "ansible"

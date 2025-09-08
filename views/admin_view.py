@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template
 
-from CTFd.plugins.ansible_challenges.models.deployment_instance import DeploymentInstance
+from CTFd.plugins.ansible_challenges.models.deployment_instance import (
+    DeploymentInstance,
+)
 from CTFd.utils.config import is_teams_mode
 from CTFd.utils.decorators import admins_only
 from CTFd.models import Teams, Users, db
@@ -28,6 +30,6 @@ def define_ansible_status(app):
                     user = Users.query.filter_by(id=instance.user_id).first()
                     instance.user_id = user.name
 
-        return render_template("admin_ansible_status.html", instances=instances)
+        return render_template("ansible_status.html", instances=instances)
 
     app.register_blueprint(admin_ansible_status)

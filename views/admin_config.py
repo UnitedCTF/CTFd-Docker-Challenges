@@ -14,7 +14,7 @@ from CTFd.utils.decorators import (
 
 class AnsibleConfig(db.Model):
     """
-    Docker Config Model. This model stores the config for docker API connections.
+    Ansible Config Model. This model stores the config for ansible deployer API connections.
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -22,7 +22,7 @@ class AnsibleConfig(db.Model):
     deployer_secret = db.Column("deployer_secret", db.String(255))
 
 
-class DockerConfigForm(BaseForm):
+class AnsibleConfigForm(BaseForm):
     id = HiddenField()
     deployer_url = StringField(
         "Deployer URL", description="The full URL to the Docker Deployer Service"
@@ -35,21 +35,21 @@ class DockerConfigForm(BaseForm):
 
 
 def define_ansible_admin(app):
-    admin_docker_config = Blueprint(
-        "admin_docker_config",
+    admin_ansible_config = Blueprint(
+        "admin_ansible_config",
         __name__,
         template_folder="templates",
         static_folder="assets",
     )
 
-    @admin_docker_config.route("/admin/docker_config", methods=["GET", "POST"])
+    @admin_ansible_config.route("/admin/ansible_config", methods=["GET", "POST"])
     @admins_only
-    def docker_config():
+    def ansible_config():
         config = AnsibleConfig.query.filter_by(id=1).first()
         if not config:
             config = AnsibleConfig()
 
-        form = DockerConfigForm(request.form, config)
+        form = AnsibleConfigForm(request.form, config)
 
         if request.method == "POST" and form.validate():
             form.populate_obj(config)
@@ -57,8 +57,6 @@ def define_ansible_admin(app):
             db.session.add(config)
             db.session.commit()
 
-        return render_template(
-            "docker_config.html", form=form
-        )
+        return render_template("ansible_config.html", form=form)
 
-    app.register_blueprint(admin_docker_config)
+    app.register_blueprint(admin_ansible_config)

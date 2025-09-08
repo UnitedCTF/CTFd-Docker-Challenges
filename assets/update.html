@@ -1,85 +1,33 @@
 {% extends "admin/challenges/update.html" %}
 {% block value %}
+<!-- Original implementation for the value attribute of the challenge -->
 <div class="form-group">
-	<label for="DockerImage" id='dockerimage_label'>Docker Image:
-		<i class="far fa-question-circle text-muted cursor-help" data-toggle="tooltip" data-placement="right"
-			title="The docker image for your challenge"></i>
-	</label>
-	<select id="dockerimage_select" name="docker_image" class="form-control" required></select>
-</div>
-<div class="form-group">
-	<label for="value">Current Value<br>
+	<label for="value">
+		Value<br>
 		<small class="form-text text-muted">
-			This is how many points the challenge is worth right now.
+			This is how many points teams will receive once they solve this challenge.
 		</small>
 	</label>
-	{% if challenge.dynamic %}
-	<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}" disabled>
-	{% else %}
-	<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}">
-	{% endif %}
-</div>
-<div class="form-group">
-	<label for="value">Is dynamic<br>
-		<small class="form-text text-muted">
-			Enable dynamic
-		</small>
-	</label>
-	<input type="checkbox" class="form-check-input" name="dynamic" {% if challenge.dynamic %}checked{%endif%}>
-</div>
-{% if challenge.dynamic %}
-<div class="form-group">
-	<label for="value">Initial Value<br>
-		<small class="form-text text-muted">
-			This is how many points the challenge was worth initially.
-		</small>
-	</label>
-	<input type="number" class="form-control chal-initial" name="initial" value="{{ challenge.initial }}">
+	<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}" required>
 </div>
 
 <div class="form-group">
-	<label for="value">Decay Function<br>
+	<label>
+		Playbook Name:<br>
 		<small class="form-text text-muted">
-			<span>How the dynamic value will be calculated based on the Decay value</span>
-			<ul>
-				<li>Linear: Calculated as <code>Initial - (Decay * SolveCount)</code></li>
-				<li>Logarithmic: Calculated as
-					<code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
-			</ul>
+			Specify the name of the playbook to use for this challenge.
 		</small>
 	</label>
-	<select name="function" class="custom-select">
-		<option value="linear" {% if challenge.function=="linear" %}selected{% endif %}>Linear</option>
-		<option value="logarithmic" {% if challenge.function=="logarithmic" %}selected{% endif %}>Logarithmic</option>
-	</select>
+	<input type="text" class="form-control" name="playbook_name" value="{{ challenge.playbook_name }}" placeholder="Enter playbook name" required>
 </div>
 
 <div class="form-group">
-	<label for="value">Decay<br>
+	<label>
+		Deploy Parameters:<br>
 		<small class="form-text text-muted">
-			<span>The decay value is used differently depending on the above Decay Function</span>
-			<ul>
-				<li>Linear: The amount of points deducted per solve. Equal deduction per solve.</li>
-				<li>Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves
-					will lose less points. Later solves will lose more points</li>
-			</ul>
+			Optional parameters to pass during deployment (JSON format).
 		</small>
 	</label>
-	<input type="number" class="form-control chal-decay" min="1" name="decay" value="{{ challenge.decay }}">
+	<input type="text" class="form-control" name="deploy_parameters" value='{{ challenge.deploy_parameters }}' placeholder='{"image_name": "myimage"}'>
 </div>
-
-<div class="form-group">
-	<label for="value">Minimum Value<br>
-		<small class="form-text text-muted">
-			This is the lowest that the challenge can be worth
-		</small>
-	</label>
-	<input type="number" class="form-control chal-minimum" name="minimum" value="{{ challenge.minimum }}">
-</div>
-{% endif %}
-{% endblock %}
-{% block footer %}
-<script>
-	var DOCKER_IMAGE = '{{ challenge.docker_image }}';
-</script>
 {% endblock %}
