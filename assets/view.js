@@ -119,7 +119,8 @@ async function deploy() {
 
     if (!res.ok) {
         const error = await res.json();
-        ezal("Attention!", error.message || "Error starting container.");
+        const errorMessage = JSON.parse(error.message || "{}");
+        ezal("Attention!", errorMessage.message || "Error starting container.");
         return;
     }
 

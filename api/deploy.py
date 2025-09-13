@@ -38,7 +38,7 @@ def create_deployment(playbook_name: str, deploy_parameters: dict[str, Any]):
     )
 
     if res.status_code != 200:
-        fail(500, f"Error communicating with the Ansible Deployer. Detailed error: {res.text}")
+        fail(500, f"Error during deployment. Deployment id: {res.json().get('detail', {}).get('id', -1)}")
 
     return res.json()
 
