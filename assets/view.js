@@ -102,6 +102,7 @@ function get_docker_status(container) {
 async function deploy() {
     let res;
     try {
+        CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
         res = await CTFd.fetch("/api/v1/deploy", {
             method: "POST",
             body: JSON.stringify({
@@ -153,6 +154,7 @@ function check_nuke_container(instance_id) {
 }
 
 function nuke_container(instance_id) {
+    CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
     CTFd.fetch("/api/v1/deploy", {
         method: "DELETE",
         body: JSON.stringify({
@@ -164,7 +166,6 @@ function nuke_container(instance_id) {
     })
         .then(() => {
             CTFd.lib.$('#docker_container').html(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small></a></span>`);
-            get_docker_status();
         }).catch(() => {
             ezal("Attention!", "Error nuking container.");
         });

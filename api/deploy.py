@@ -44,7 +44,7 @@ def create_deployment(playbook_name: str, deploy_parameters: dict[str, Any]):
 
 
 def delete_container(config: AnsibleConfig, deploy_id: int):
-    delete_url = urljoin(config.deployer_url, f"/deploy/{deploy_id}/")
+    delete_url = urljoin(config.deployer_url, f"/deploy/{deploy_id}")
     res = requests.delete(
         delete_url,
         headers={"Authorization": f"Bearer {config.deployer_secret}"},
