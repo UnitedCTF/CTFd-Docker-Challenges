@@ -38,10 +38,10 @@ def create_deployment(playbook_name: str, deploy_parameters: dict[str, Any]):
     )
 
     if res.status_code != 200:
-        fail(
-            500,
-            f"Error during deployment. Deployment id: {res.json().get('detail', {}).get('id', -1)}",
-        )
+        error = res.json().get('detail', {})
+        if isinstance(error, str):
+            raise RuntimeError(f"Error during deployment: {error}")
+        raise RuntimeError(f"Error during deployment. Deployment id: {res.json().get('detail', {}).get('id', -1)}")
 
     return res.json()
 
@@ -75,7 +75,7 @@ class DeploymentDelete(BaseModel):
 class DeploymentInfo(BaseModel):
     id: int
     challenge_id: int
-    connection_info: str
+    connection_info: Optional[str]
     in_progress: bool
 
 
@@ -88,7 +88,7 @@ class DeploymentAPI(Resource):
             user_or_team_id=get_current_team().id
             if is_teams_mode()
             else get_current_user().id
-        ).filter_by(in_progress=False)  # FIXME: also show in-progress instances with client-side polling
+        ).filter_by()
 
         if args.get("challenge_id"):
             instance = instances.filter_by(challenge_id=args["challenge_id"]).first()
@@ -135,15 +135,20 @@ class DeploymentAPI(Resource):
         db.session.add(instance)
         db.session.commit()
 
-        res = create_deployment(challenge.playbook_name, deploy_parameters)
-        deploy_id = res.get("id")
-        connection_info = res.get("connection_info")
+        try:
+            res = create_deployment(challenge.playbook_name, deploy_parameters)
+            deploy_id = res.get("id")
+            connection_info = res.get("connection_info")
 
-        instance.deploy_id = deploy_id
-        instance.connection_info = connection_info
-        instance.in_progress = False
-        db.session.add(instance)
-        db.session.commit()
+            instance.deploy_id = deploy_id
+            instance.connection_info = connection_info
+            instance.in_progress = False
+            db.session.add(instance)
+            db.session.commit()
+        except Exception as e:
+            db.session.delete(instance)
+            db.session.commit()
+            fail(500, str(e))
 
         return DeploymentInfo(
             id=instance.id,

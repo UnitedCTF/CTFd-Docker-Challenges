@@ -47,16 +47,45 @@ CTFd._internal.challenge.submit = function (preview) {
     })
 };
 
-function displayConnectionInfo(deploymentInfo) {
-    // If connection_info is a URL, make it a clickable link
-    const connection_info = (deploymentInfo.connection_info.indexOf('http') === 0) ? `<a href="${deploymentInfo.connection_info}" target="_blank">${deploymentInfo.connection_info}</a>` : `<code>${deploymentInfo.connection_info}</code>`;
+function setDockerContainerHtml(htmlContent) {
+    const challengeId = CTFd._internal.challenge.data.id;
+    CTFd.lib.$(`#docker_container_${challengeId}`).html(htmlContent);
+}
 
-    CTFd.lib.$('#docker_container').html(
-        '<div>Instance available at:<br />' + connection_info + '</div>' +
+function displayConnectionInfo(deploymentInfo) {
+    if (deploymentInfo.in_progress) {
+        setSpinningWheel();
+        // Poll every 2 seconds until deployment is complete
+        setTimeout(get_docker_status, 2000);
+        return;
+    }
+
+    // If connection_info is a URL, make it a clickable link
+    const connectionInfo = (deploymentInfo.connection_info.indexOf('http') === 0) ? `<a href="${deploymentInfo.connection_info}" target="_blank">${deploymentInfo.connection_info}</a>` : `<code>${deploymentInfo.connection_info}</code>`;
+
+    setDockerContainerHtml(
+        '<div>Instance available at:<br />' + connectionInfo + '</div>' +
         `<div class="mt-2"><a onclick="check_nuke_container(${deploymentInfo.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Delete Instance</small></a></div>`
     );
 }
 
+function setSpinningWheel() {
+    setDockerContainerHtml('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+}
+
+function resetDeployButton() {
+    setDockerContainerHtml(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small></a></span>`);
+}
+
+function showErrorMessage(title, body) {
+    const content =
+        '<div>' +
+        '<h5>' + title + '</h5>' +
+        '<p>' + body + '</p>' +
+        '</div>';
+
+    setDockerContainerHtml(content);
+}
 
 async function get_docker_status() {
     const challengeId = CTFd._internal.challenge.data.id;
@@ -75,7 +104,7 @@ async function get_docker_status() {
 async function deploy() {
     let res;
     try {
-        CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+        setSpinningWheel();
         res = await CTFd.fetch("/api/v1/deploy", {
             method: "POST",
             body: JSON.stringify({
@@ -86,31 +115,27 @@ async function deploy() {
             }
         });
     } catch (err) {
-        console.log(err)
-        ezal("Attention!", "Network error while starting container.");
+        showErrorMessage("Attention!", "Network error while starting container.");
         return;
     }
 
     if (!res.ok) {
         const error = await res.json();
         const errorMessage = JSON.parse(error.message || "{}");
-        ezal("Attention!", errorMessage.message || "Error starting container.");
+        if (errorMessage.message === "A deployment is already in progress for this challenge") {
+            // If a deployment is already in progress, poll for status
+            setSpinningWheel();
+            setTimeout(get_docker_status, 2000);
+            return;
+        }
+
+        showErrorMessage("Attention!", errorMessage.message || "Error starting container.");
         return;
     }
 
     const data = await res.json();
 
     displayConnectionInfo(data);
-}
-
-function ezal(title, body) {
-    const content =
-        '<div>' +
-        '<h5>' + title + '</h5>' +
-        '<p>' + body + '</p>' +
-        '</div>';
-
-    CTFd.lib.$("#docker_container").html(content);
 }
 
 function check_nuke_container(instance_id) {
@@ -120,7 +145,7 @@ function check_nuke_container(instance_id) {
 }
 
 function nuke_container(instance_id) {
-    CTFd.lib.$('#docker_container').html('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+    setSpinningWheel();
     CTFd.fetch("/api/v1/deploy", {
         method: "DELETE",
         body: JSON.stringify({
@@ -131,8 +156,8 @@ function nuke_container(instance_id) {
         }
     })
         .then(() => {
-            CTFd.lib.$('#docker_container').html(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small></a></span>`);
+            resetDeployButton();
         }).catch(() => {
-            ezal("Attention!", "Error nuking container.");
+            showErrorMessage("Attention!", "Error nuking container.");
         });
 }
