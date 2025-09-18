@@ -17,7 +17,7 @@ String.prototype.format = function () {
 };
 
 CTFd._internal.challenge.postRender = function () {
-    // get_docker_status(challenge.data.docker_image);
+    get_docker_status();
 }
 
 
@@ -47,56 +47,29 @@ CTFd._internal.challenge.submit = function (preview) {
     })
 };
 
+function displayConnectionInfo(deploymentInfo) {
+    // If connection_info is a URL, make it a clickable link
+    const connection_info = (deploymentInfo.connection_info.indexOf('http') === 0) ? `<a href="${deploymentInfo.connection_info}" target="_blank">${deploymentInfo.connection_info}</a>` : `<code>${deploymentInfo.connection_info}</code>`;
 
-function get_docker_status(container) {
-    return CTFd.fetch("/api/v1/docker_status")
+    CTFd.lib.$('#docker_container').html(
+        '<div>Instance available at:<br />' + connection_info + '</div>' +
+        `<div class="mt-2"><a onclick="check_nuke_container(${deploymentInfo.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Delete Instance</small></a></div>`
+    );
+}
+
+
+async function get_docker_status() {
+    const challengeId = CTFd._internal.challenge.data.id;
+
+    const data = await CTFd.fetch("/api/v1/deploy?challenge_id=" + challengeId)
         .then((data) => {
-            return data.json().then((result) => {
-                const hostname = data.url.split('//')[1].split('/')[0];
-                let containerFound = false;
-
-                CTFd.lib.$.each(result['data'], function (i, item) {
-                    if (item.docker_image === container) {
-                        containerFound = true;
-                        const ports = String(item.ports).split(',');
-                        let data = '';
-                        CTFd.lib.$.each(ports, function (x, port) {
-                            port = String(port).split('/')[0];
-                            data = data + `<a href='http://${hostname}:${port}' target='_blank'>http://${hostname}:${port}</a><br />`;
-                        });
-                        CTFd.lib.$('#docker_container').html(
-                            '<pre>Instance available at:<br />' + data +
-                            '<div class="mt-2" id="' + String(item.instance_id).substring(0, 10) + '_revert_container"></div>' +
-                            `<div class="mt-2" id="${String(item.instance_id).substring(0, 10)}_delete_container"><a id="delete_${String(item.instance_id).substring(0, 10)}" style="cursor: pointer;" class="fas fa-trash" onclick="check_nuke_container('${item.instance_id}')"></a></div>`
-                        );
-                        const countDownDate = new Date(parseInt(item.revert_time) * 1000).getTime();
-                        const x = setInterval(function () {
-                            const now = new Date().getTime();
-                            const distance = countDownDate - now;
-                            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                            if (seconds < 10) {
-                                seconds = "0" + seconds;
-                            }
-                            CTFd.lib.$("#" + String(item.instance_id).substring(0, 10) + "_revert_container").html('Next Revert Available in ' + minutes + ':' + seconds);
-                            if (distance < 0) {
-                                clearInterval(x);
-                                CTFd.lib.$("#" + String(item.instance_id).substring(0, 10) + "_revert_container").html('<a onclick="start_container(\'' + item.docker_image + '\', true);" class=\'btn btn-dark\'><small style=\'color:white;\'><i class="fas fa-redo"></i> Revert</small></a>');
-                            }
-                        }, 1000);
-                    }
-                });
-
-                return containerFound;
-            }).catch(() => {
-                ezal("Attention!", "Error");
-                return false;
-            });
-        }).catch(() => {
-            // TODO
-            ezal("Attention!", "Error");
-            return false;
+            return data.json();
         });
+
+    if (data) {
+        displayConnectionInfo(data);
+    }
+    return;
 }
 
 async function deploy() {
@@ -127,14 +100,7 @@ async function deploy() {
 
     const data = await res.json();
 
-    // If connection_info is a URL, make it a clickable link
-    const connection_info = (data.connection_info.indexOf('http') === 0) ? `<a href="${data.connection_info}" target="_blank">${data.connection_info}</a>` : `<code>${data.connection_info}</code>`;
-
-    console.log("Container started");
-    CTFd.lib.$('#docker_container').html(
-        '<div>Instance available at:<br />' + connection_info + '</div>' +
-        `<div class="mt-2"><a onclick="check_nuke_container(${data.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Delete Instance</small></a></div>`
-    );
+    displayConnectionInfo(data);
 }
 
 function ezal(title, body) {

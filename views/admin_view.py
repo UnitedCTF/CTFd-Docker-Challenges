@@ -24,11 +24,11 @@ def define_ansible_status(app):
 
             for instance in instances:
                 if is_teams_mode():
-                    team = Teams.query.filter_by(id=instance.team_id).first()
-                    instance.team_id = team.name
+                    team = Teams.query.filter_by(id=instance.user_or_team_id).first()
+                    instance.user_or_team_id = team.name
                 else:
-                    user = Users.query.filter_by(id=instance.user_id).first()
-                    instance.user_id = user.name
+                    user = Users.query.filter_by(id=instance.user_or_team_id).first()
+                    instance.user_or_team_id = user.name
 
         return render_template("ansible_status.html", instances=instances)
 

@@ -38,26 +38,30 @@ def create_deployment(playbook_name: str, deploy_parameters: dict[str, Any]):
     )
 
     if res.status_code != 200:
-        fail(500, f"Error during deployment. Deployment id: {res.json().get('detail', {}).get('id', -1)}")
+        fail(
+            500,
+            f"Error during deployment. Deployment id: {res.json().get('detail', {}).get('id', -1)}",
+        )
 
     return res.json()
 
 
 def delete_container(config: AnsibleConfig, deploy_id: int):
     delete_url = urljoin(config.deployer_url, f"/deploy/{deploy_id}")
-    res = requests.delete(
+    requests.delete(
         delete_url,
         headers={"Authorization": f"Bearer {config.deployer_secret}"},
     )
-
-    if res.status_code != 200:
-        fail(500, f"Error communicating with the Ansible Deployer. Detailed error: {res.text}")
 
 
 # API
 deploy_namespace = Namespace(
     "deploy", description="Endpoint to interact with deployments"
 )
+
+
+class DeploymentGet(BaseModel):
+    challenge_id: Optional[int] = None
 
 
 class DeploymentCreate(BaseModel):
@@ -71,21 +75,30 @@ class DeploymentDelete(BaseModel):
 class DeploymentInfo(BaseModel):
     id: int
     challenge_id: int
-    connection_info: dict[str, Any]
+    connection_info: str
+    in_progress: bool
 
 
 @deploy_namespace.route("", methods=["POST", "GET", "DELETE"])
 class DeploymentAPI(Resource):
     @authed_only
-    def get(self):
-        if is_teams_mode():
-            session = get_current_team()
-            instances = DeploymentInstance.query.filter_by(team_id=session.id)
-        else:
-            session = get_current_user()
-            instances = DeploymentInstance.query.filter_by(user_id=session.id)
+    @validate_args(DeploymentGet, location="query")
+    def get(self, args: dict):
+        instances = DeploymentInstance.query.filter_by(
+            user_or_team_id=get_current_team().id
+            if is_teams_mode()
+            else get_current_user().id
+        ).filter_by(in_progress=False)  # FIXME: also show in-progress instances with client-side polling
 
-        return [DeploymentInfo(**instance) for instance in instances]
+        if args.get("challenge_id"):
+            instance = instances.filter_by(challenge_id=args["challenge_id"]).first()
+            return (
+                DeploymentInfo.parse_obj(instance.__dict__).dict() if instance else None
+            )
+
+        return [
+            DeploymentInfo.parse_obj(instance.__dict__).dict() for instance in instances
+        ]
 
     @authed_only
     @validate_args(DeploymentCreate, location="json")
@@ -96,27 +109,48 @@ class DeploymentAPI(Resource):
         if not challenge:
             fail(400, "Invalid challenge ID")
 
+        existing_instance = DeploymentInstance.query.filter_by(
+            user_or_team_id=get_current_team().id
+            if is_teams_mode()
+            else get_current_user().id,
+            challenge_id=challenge.id,
+        ).first()
+        if existing_instance:
+            if existing_instance.in_progress:
+                fail(400, "A deployment is already in progress for this challenge")
+            return DeploymentInfo.parse_obj(existing_instance.__dict__).dict()
+
         name = hashlib.md5(cast(Users, get_current_user()).email.encode()).hexdigest()[
             :10
         ]
         deploy_parameters = json.loads(challenge.deploy_parameters)
         deploy_parameters["user_name"] = name
 
-        res = create_deployment(challenge.playbook_name, deploy_parameters)
-        deploy_id = res.get("id")
-        connection_info = res.get("connection_info")
-
         instance = DeploymentInstance(
-            team_id=get_current_team().id if is_teams_mode() else None,
-            user_id=get_current_user().id if not is_teams_mode() else None,
+            user_or_team_id=get_current_team().id
+            if is_teams_mode()
+            else get_current_user().id,
             challenge_id=challenge.id,
-            deploy_id=deploy_id,
-            connection_info=connection_info,
         )
         db.session.add(instance)
         db.session.commit()
 
-        return {"id": instance.id, "connection_info": connection_info}
+        res = create_deployment(challenge.playbook_name, deploy_parameters)
+        deploy_id = res.get("id")
+        connection_info = res.get("connection_info")
+
+        instance.deploy_id = deploy_id
+        instance.connection_info = connection_info
+        instance.in_progress = False
+        db.session.add(instance)
+        db.session.commit()
+
+        return DeploymentInfo(
+            id=instance.id,
+            challenge_id=instance.challenge_id,
+            connection_info=instance.connection_info,
+            in_progress=instance.in_progress,
+        ).dict()
 
     @authed_only
     @validate_args(DeploymentDelete, location="json")
@@ -125,12 +159,12 @@ class DeploymentAPI(Resource):
 
         if is_admin():
             instances = DeploymentInstance.query.all()
-        elif is_teams_mode():
-            session = get_current_team()
-            instances = DeploymentInstance.query.filter_by(team_id=session.id)
         else:
-            session = get_current_user()
-            instances = DeploymentInstance.query.filter_by(user_id=session.id)
+            instances = DeploymentInstance.query.filter_by(
+                user_or_team_id=get_current_team().id
+                if is_teams_mode()
+                else get_current_user().id
+            )
 
         config = AnsibleConfig.query.filter_by(id=1).first()
         if instance_id is None:

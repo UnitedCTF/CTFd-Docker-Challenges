@@ -33,11 +33,7 @@
                     {% for instance in instances %}
                     <tr id='tr_{{instance.id}}' name='{{instance.id}}'>
                         <td class='text-center' value='{{instance.id}}'>{{instance.id}}</td>
-                        {% if instance.team_id %}
-                        <td class='text-center'>{{instance.team_id | safe }}</td>
-                        {% else %}
-                        <td class='text-center'>{{instance.user_id | safe }}</td>
-                        {% endif %}
+                        <td class='text-center'>{{instance.user_or_team_id | safe }}</td>
                         <td class='text-center'>{{instance.challenge_id}}</td>
                         <td class='text-center'>{{instance.deployment_id}}</td>
                         <td class='text-center'>{{instance.connection_info | truncate(15)}}</td>
