@@ -102,7 +102,7 @@
     }
 
     async function delete_deployment(instance, all) {
-        const result = await fetch("/api/v1/deploy", {
+        const result = await CTFd.fetch("/api/v1/deploy", {
             method: "DELETE",
             body: all ? null : JSON.stringify({ instance_id: instance }),
             headers: {
