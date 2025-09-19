@@ -104,7 +104,7 @@
     async function delete_deployment(instance, all) {
         const result = await CTFd.fetch("/api/v1/deploy", {
             method: "DELETE",
-            body: all ? null : JSON.stringify({ instance_id: instance }),
+            body: JSON.stringify({ instance_id: all ? instance : undefined }),
             headers: {
                 "Content-Type": "application/json"
             }
