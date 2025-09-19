@@ -112,7 +112,7 @@
 
         if (result.ok) {
             if (all == true) {
-                window.location = '{{ script_root }}/admin/docker_status'
+                window.location.reload();
             }
             else {
                 document.getElementById("tr_" + instance).style.display = "none";
