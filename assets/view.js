@@ -17,7 +17,7 @@ String.prototype.format = function () {
 };
 
 CTFd._internal.challenge.postRender = function () {
-    get_docker_status();
+    getDeploymentStatus();
 }
 
 
@@ -47,34 +47,34 @@ CTFd._internal.challenge.submit = function (preview) {
     })
 };
 
-function setDockerContainerHtml(htmlContent) {
+function setDeploymentInfo(htmlContent) {
     const challengeId = CTFd._internal.challenge.data.id;
-    CTFd.lib.$(`#docker_container_${challengeId}`).html(htmlContent);
+    CTFd.lib.$(`#ansible_deploy_${challengeId}`).html(htmlContent);
 }
 
 function displayConnectionInfo(deploymentInfo) {
     if (deploymentInfo.in_progress) {
         setSpinningWheel();
         // Poll every 2 seconds until deployment is complete
-        setTimeout(get_docker_status, 2000);
+        setTimeout(getDeploymentStatus, 2000);
         return;
     }
 
     // If connection_info is a URL, make it a clickable link
     const connectionInfo = (deploymentInfo.connection_info.indexOf('http') === 0) ? `<a href="${deploymentInfo.connection_info}" target="_blank">${deploymentInfo.connection_info}</a>` : `<code>${deploymentInfo.connection_info}</code>`;
 
-    setDockerContainerHtml(
-        '<div>Instance available at:<br />' + connectionInfo + '</div>' +
-        `<div class="mt-2"><a onclick="check_nuke_container(${deploymentInfo.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Delete Instance</small></a></div>`
+    setDeploymentInfo(
+        '<div>Instance disponible à&nbsp;:<br />' + connectionInfo + '</div>' +
+        `<div class="mt-2"><a onclick="confirm_delete_deployment(${deploymentInfo.id})" data-bs-theme='dark' class='btn btn-danger border border-white'><small style='color:white;'><i class="fas fa-trash me-1"></i>Supprimer l'instance</small></a></div>`
     );
 }
 
 function setSpinningWheel() {
-    setDockerContainerHtml('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
+    setDeploymentInfo('<div class="text-center"><i class="fas fa-circle-notch fa-spin fa-1x"></i></div>');
 }
 
 function resetDeployButton() {
-    setDockerContainerHtml(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Deploy Instance</small></a></span>`);
+    setDeploymentInfo(`<span><a onclick="deploy()" class='btn btn-dark border border-white'><small style='color:white;'><i class="fas fa-play me-1"></i>Déployer l'instance</small></a></span>`);
 }
 
 function showErrorMessage(title, body) {
@@ -84,10 +84,10 @@ function showErrorMessage(title, body) {
         '<p>' + body + '</p>' +
         '</div>';
 
-    setDockerContainerHtml(content);
+    setDeploymentInfo(content);
 }
 
-async function get_docker_status() {
+async function getDeploymentStatus() {
     const challengeId = CTFd._internal.challenge.data.id;
 
     const data = await CTFd.fetch("/api/v1/deploy?challenge_id=" + challengeId)
@@ -115,7 +115,7 @@ async function deploy() {
             }
         });
     } catch (err) {
-        showErrorMessage("Attention!", "Network error while starting container.");
+        showErrorMessage("Attention&nbsp;!", "Erreur réseau pendant le démarrage du déploiement.");
         return;
     }
 
@@ -125,11 +125,11 @@ async function deploy() {
         if (errorMessage.message === "A deployment is already in progress for this challenge") {
             // If a deployment is already in progress, poll for status
             setSpinningWheel();
-            setTimeout(get_docker_status, 2000);
+            setTimeout(getDeploymentStatus, 2000);
             return;
         }
 
-        showErrorMessage("Attention!", errorMessage.message || "Error starting container.");
+        showErrorMessage("Attention&nbsp;!", (errorMessage.message || "Erreur pendant le démarrage du déploiement.") + "<br>Merci de réessayer plus tard ou de contacter un administrateur.");
         return;
     }
 
@@ -138,13 +138,13 @@ async function deploy() {
     displayConnectionInfo(data);
 }
 
-function check_nuke_container(instance_id) {
-    if (confirm("Are you sure you want to nuke this container?")) {
-        nuke_container(instance_id);
+function confirm_delete_deployment(instance_id) {
+    if (confirm("Voulez-vous vraiment supprimer ce déploiement ?")) {
+        delete_deployment(instance_id);
     }
 }
 
-function nuke_container(instance_id) {
+function delete_deployment(instance_id) {
     setSpinningWheel();
     CTFd.fetch("/api/v1/deploy", {
         method: "DELETE",
@@ -158,6 +158,6 @@ function nuke_container(instance_id) {
         .then(() => {
             resetDeployButton();
         }).catch(() => {
-            showErrorMessage("Attention!", "Error nuking container.");
+            showErrorMessage("Attention&nbsp;!", "Erreur réseau pendant la suppression du déploiement.");
         });
 }
