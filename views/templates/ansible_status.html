@@ -16,13 +16,12 @@
                         aria-hidden="true">×</span></button>
             </div>
             {% endfor %}
-            {% if dockers %}
-            <table id='dockers' class="table table-striped">
+            {% if instances %}
+            <table id='instances' class="table table-striped">
                 <thead>
                     <tr>
                         <th width="10px" class="text-center" style="cursor: pointer;" onclick="sortTable(0)">ID</th>
-                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(1)">{% if dockers[0].team_id
-                            %}Team{% else %}User{% endif %}</th>
+                        <th class="text-left" style="cursor: pointer;" onclick="sortTable(1)">Team / User</th>
                         <th class="text-left" style="cursor: pointer;" onclick="sortTable(2)">Challenge ID</th>
                         <th class="text-left" style="cursor: pointer;" onclick="sortTable(3)">Deployment ID</th>
                         <th class="text-left" style="cursor: pointer;" onclick="sortTable(4)">Connection info</th>
@@ -49,7 +48,7 @@
                     Containers</button>
             </div>
             {% else %}
-            <h3 class='text-center'> No Docker Containers Active</h3>
+            <h3 class='text-center'>No Deployments Active</h3>
             {% endif %}
         </div>
     </div>
@@ -59,7 +58,7 @@
 <script>
     function sortTable(n) {
         var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById("dockers");
+        table = document.getElementById("instances");
         switching = true;
         dir = "asc";
         while (switching) {
